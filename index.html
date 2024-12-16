@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Processing App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            width: 48%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        img {
+            max-width: 100%;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        #resultContainer {
+            text-align: center;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI Image Processing App</h1>
+
+    <div class="container">
+        <div class="section">
+            <h2>Virtual Try-On</h2>
+            <form id="tryonForm">
+                <label for="inputImage">Person Image:</label>
+                <input type="file" id="inputImage" name="input_img" accept="image/*" required>
+
+                <label for="clothImage">Cloth Image:</label>
+                <input type="file" id="clothImage" name="cloth_img" accept="image/*" required>
+
+                <label for="poseType">Pose Type:</label>
+                <select id="poseType" name="pose_type">
+                    <option value="upper_body">Upper Body</option>
+                    <option value="lower_body">Lower Body</option>
+                </select>
+
+                <label>
+                    <input type="checkbox" id="preserveBackground" name="preserve_background" checked>
+                    Preserve Background
+                </label>
+
+                <label>
+                    <input type="checkbox" id="inpaintFace" name="inpaint_face" checked>
+                    Inpaint Face
+                </label>
+
+                <label for="nTrials">Number of Trials:</label>
+                <input type="number" id="nTrials" name="n_trials" value="30" min="1" max="100">
+
+                <button type="submit">Try On</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Face Swap</h2>
+            <form id="uploadForm">
+                <label for="sourceImage">Source Image:</label>
+                <input type="file" id="sourceImage" name="source_image" accept="image/*" required>
+
+                <label for="targetImage">Target Image:</label>
+                <input type="file" id="targetImage" name="target_image" accept="image/*" required>
+
+                <button type="submit">Swap Faces</button>
+            </form>
+
+            <h3>Or use URLs</h3>
+            <form id="urlForm">
+                <label for="sourceUrl">Source Image URL:</label>
+                <input type="url" id="sourceUrl" name="source_image" required>
+
+                <label for="targetUrl">Target Image URL:</label>
+                <input type="url" id="targetUrl" name="target_image" required>
+
+                <button type="submit">Swap Faces</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="resultContainer">
+        <h2>Result</h2>
+        <img id="resultImage" src="" alt="Processed image will appear here" style="display: none;">
+        <img id="maskImage" src="" alt="Mask image will appear here" style="display: none;">
+    </div>
+
+    <script>
+        const apiUrl = 'http://localhost:8000';
+        const tryonUrl = 'http://localhost:8010';
+
+        document.getElementById('tryonForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            try {
+                const response = await fetch(`${tryonUrl}/tryon`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('resultImage').src = `data:image/png;base64,${data.result_image}`;
+                    document.getElementById('resultImage').style.display = 'block';
+                    document.getElementById('maskImage').src = `data:image/png;base64,${data.mask_image}`;
+                    document.getElementById('maskImage').style.display = 'block';
+                } else {
+                    alert('Error: ' + response.statusText);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('source_image', document.getElementById('sourceImage').files[0]);
+            formData.append('target_image', document.getElementById('targetImage').files[0]);
+
+            try {
+                const response = await fetch(`${apiUrl}/swap_faces_file/`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    document.getElementById('resultImage').src = URL.createObjectURL(blob);
+                    document.getElementById('resultImage').style.display = 'block';
+                } else {
+                    alert('Error: ' + response.statusText);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        document.getElementById('urlForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const sourceUrl = document.getElementById('sourceUrl').value;
+            const targetUrl = document.getElementById('targetUrl').value;
+
+            try {
+                const response = await fetch(`${apiUrl}/swap_faces_url/?source_image=${encodeURIComponent(sourceUrl)}&target_image=${encodeURIComponent(targetUrl)}`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    document.getElementById('resultImage').src = URL.createObjectURL(blob);
+                    document.getElementById('resultImage').style.display = 'block';
+                } else {
+                    alert('Error: ' + response.statusText);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

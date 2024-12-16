@@ -26,6 +26,14 @@ def get_available_execution_provider_set() -> ExecutionProviderSet:
 	for execution_provider_key, execution_provider_value in execution_provider_set.items():
 		if execution_provider_value in available_execution_providers:
 			available_execution_provider_set[execution_provider_key] = execution_provider_value
+
+	# print(available_execution_provider_set)
+	#
+	# import onnxruntime as ort
+	# print(ort.get_device())
+	# print(ort.__version__)
+	# print(ort.get_build_info())
+
 	return available_execution_provider_set
 
 

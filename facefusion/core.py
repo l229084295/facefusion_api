@@ -34,6 +34,7 @@ def cli() -> None:
 
 	if validate_args(program):
 		args = vars(program.parse_args())
+		# print(args)
 		apply_args(args, state_manager.init_item)
 
 		if state_manager.get_item('command'):
@@ -115,6 +116,8 @@ def processors_pre_check() -> bool:
 
 def conditional_process() -> ErrorCode:
 	start_time = time()
+	# print(f"conditional process: {state_manager.get_state()}")
+
 	for processor_module in get_processors_modules(state_manager.get_item('processors')):
 		if not processor_module.pre_process('output'):
 			return 2

@@ -19,23 +19,42 @@ if is_macos():
 	ssl._create_default_https_context = ssl._create_unverified_context
 
 
+# def conditional_download(download_directory_path: str, urls: List[str]) -> None:
+# 	print(urls)
+# 	proxy = '127.0.0.1:7897'
+# 	for url in urls:
+# 		download_file_name = os.path.basename(urlparse(url).path)
+# 		download_file_path = os.path.join(download_directory_path, download_file_name)
+# 		initial_size = get_file_size(download_file_path)
+# 		download_size = get_download_size(url)
+#
+# 		if initial_size < download_size:
+# 			with tqdm(total=download_size, initial=initial_size, desc=wording.get('downloading'), unit='B', unit_scale=True, unit_divisor=1024, ascii=' =', disable=state_manager.get_item('log_level') in ['warn', 'error']) as progress:
+# 				curl_command = [
+# 					shutil.which('curl'),
+# 					'--create-dirs',
+# 					'--silent',
+# 					'--insecure',
+# 					'--location',
+# 					'--continue-at', '-',
+# 					'--output', download_file_path,
+# 					'--proxy', proxy,
+# 					url
+# 				]
+# 				subprocess.Popen(curl_command)
+# 				current_size = initial_size
+#
+# 				progress.set_postfix(file=download_file_name)
+# 				while current_size < download_size:
+# 					if is_file(download_file_path):
+# 						current_size = get_file_size(download_file_path)
+# 						progress.update(current_size - progress.n)
+
 def conditional_download(download_directory_path : str, urls : List[str]) -> None:
 	for url in urls:
-		download_file_name = os.path.basename(urlparse(url).path)
-		download_file_path = os.path.join(download_directory_path, download_file_name)
-		initial_size = get_file_size(download_file_path)
-		download_size = get_download_size(url)
-
-		if initial_size < download_size:
-			with tqdm(total = download_size, initial = initial_size, desc = wording.get('downloading'), unit = 'B', unit_scale = True, unit_divisor = 1024, ascii = ' =', disable = state_manager.get_item('log_level') in [ 'warn', 'error' ]) as progress:
-				subprocess.Popen([ shutil.which('curl'), '--create-dirs', '--silent', '--insecure', '--location', '--continue-at', '-', '--output', download_file_path, url ])
-				current_size = initial_size
-
-				progress.set_postfix(file = download_file_name)
-				while current_size < download_size:
-					if is_file(download_file_path):
-						current_size = get_file_size(download_file_path)
-						progress.update(current_size - progress.n)
+		# print("skip save to", download_directory_path)
+		# print("skip downloading", url)
+		pass
 
 
 @lru_cache(maxsize = None)
@@ -89,6 +108,7 @@ def conditional_download_sources(download_directory_path : str, sources : Downlo
 			for index in sources:
 				if sources.get(index).get('path') in invalid_source_paths:
 					invalid_source_url = sources.get(index).get('url')
+					# print(invalid_source_paths)
 					conditional_download(download_directory_path, [ invalid_source_url ])
 
 	valid_source_paths, invalid_source_paths = validate_source_paths(source_paths)
