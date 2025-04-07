@@ -1,5 +1,6 @@
 import requests
 import uvicorn
+import os
 from fastapi import FastAPI, File, UploadFile, Response
 from fastapi.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
@@ -32,6 +33,7 @@ async def root():
 
 @app.post("/swap_faces_file/")
 async def swap_faces(source_image: UploadFile = File(...), target_image: UploadFile = File(...)):
+	os.makedirs("./images", exist_ok=True)
     source_image_path = f'./images/{source_image.filename}'
     target_image_path = f'./images/{target_image.filename}'
     with open(source_image_path, 'wb') as source_image_file:
@@ -103,4 +105,4 @@ from fastapi.staticfiles import StaticFiles
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
